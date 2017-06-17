@@ -6,3 +6,12 @@ class Page:
         self.links = set()
         # Set of asset URL strings in this page.
         self.assets = set()
+
+    def __str__(self):
+        return ''.join(
+            (
+                self.url,
+                '\n\tLinks:\n\t', str(self.links),
+                '\n\tAssets:\n\t', str(self.assets),
+            )
+        )

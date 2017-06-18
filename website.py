@@ -51,6 +51,8 @@ class Website:
         """Finds links in the page, adds it to the page and to_visit set."""
         for link_tag in bs.find_all('a'):
             link = link_tag.get('href')
+            if not link:
+                continue
             # We add the link to page with no changes.
             page.links.add(link)
             link, link_hostname = self.fix_link(link, parsed_url)
@@ -87,9 +89,13 @@ class Website:
         We gather all links and assets and we only follow URLs with the same
         hostname.
         """
+        count = 0
         while self.to_visit:
             url = self.to_visit.pop()
             self.scrape_url(url)
+            count += 1
+            if count > 20:
+                break
 
     def print_sitemap(self):
         """

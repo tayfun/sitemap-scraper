@@ -1,7 +1,9 @@
 from collections import OrderedDict
 from urllib.parse import urlparse, urlunparse
+import asyncio
 
 from bs4 import BeautifulSoup
+import aiohttp
 import fire
 import requests
 import w3lib.url
@@ -99,11 +101,61 @@ class Website:
             if count > 20:
                 break
 
-    def print_sitemap(self):
+    async def async_scrape_url(self, url):
+        """Scrapes a single URL."""
+        print("Scraping {}".format(url))
+        page = Page(url)
+        self.pages[url] = page
+        # TODO: Better to use same session for all requests as it has
+        # connection pooling and other improvements.
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                if response.status != requests.codes.ok:
+                    return
+                # NOTE: html.parser engine is slower than lxml
+                bs = BeautifulSoup(await response.text(), 'lxml')
+                parsed_url = urlparse(url)
+                # Find links.
+                self.find_links(page, bs, parsed_url)
+                # Find assets.
+                for tag_name, attr in self.asset_tags:
+                    for tag in bs.find_all(tag_name):
+                        link = tag.get(attr)
+                        # script src might be empty if it is inlined.
+                        if link:
+                            page.assets.add(link)
+
+    def async_scrape(self):
+        """
+        Scrape starting from the seed URL that Website is initialized with.
+
+        We gather all links and assets and we only follow URLs with the same
+        hostname.
+        """
+        loop = asyncio.get_event_loop()
+        count = 0
+        while self.to_visit:
+            print('There are {} links to visit.'.format(
+                len(self.to_visit)))
+            count += len(self.to_visit)
+            coros = (
+                self.async_scrape_url(url) for url, _ in
+                self.to_visit.items()
+            )
+            futures = asyncio.gather(*coros)
+            loop.run_until_complete(futures)
+            if count > 20:
+                break
+        loop.close()
+
+    def print_sitemap(self, async=False):
         """
         Scrapes a website starting with URL argument seed and prints sitemap.
         """
-        self.scrape()
+        if async:
+            self.async_scrape()
+        else:
+            self.scrape()
         print('Sitemap:\n', self)
 
     def __str__(self):

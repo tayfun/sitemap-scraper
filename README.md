@@ -13,6 +13,10 @@ This project scrapes a given domain and creates an internal site map of the page
 
     python website.py --seed http://blog.tayfunsen.com/ print-sitemap
 
+Or if you want to run async:
+
+    python website.py --seed https://oneplus.net/uk/launch print_sitemap async
+
 # Run tests
 
     pip install -r requirements_test.txt

@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from unittest.mock import Mock
 
 from bs4 import BeautifulSoup
@@ -26,7 +27,9 @@ def page_content():
 def test_init_seed_is_canonical_slash_in_the_end():
     website = Website('http://blog.tayfunsen.com')
     # Slash is added to the end.
-    assert website.to_visit == {'http://blog.tayfunsen.com/'}
+    assert website.to_visit == OrderedDict(
+        (('http://blog.tayfunsen.com/', None),)
+    )
 
 
 def test_init_seed_is_canonical_get_parameter_order():
@@ -74,7 +77,7 @@ def test_fix_link(link, hostname, scheme, result):
         'hostname',
         'http',
         {'/', '/new-url', 'http://different_hostname', 'https://hostname'},
-        {'http://hostname/', 'https://hostname/', 'http://hostname/new-url'}
+        ('http://hostname/', 'https://hostname/', 'http://hostname/new-url')
     ),
 ])
 def test_find_links(page_content, hostname, scheme, links, to_visit):
@@ -84,18 +87,18 @@ def test_find_links(page_content, hostname, scheme, links, to_visit):
     mock_parsed_url.netloc = hostname
     website = Website('http://hostname/url')
     # Simulate visiting the page.
-    website.to_visit.pop()
+    website.to_visit.popitem()
     page = Page('a_url')
     bs = BeautifulSoup(page_content, 'html.parser')
     website.find_links(page, bs, mock_parsed_url)
     assert page.links == links
-    assert website.to_visit == to_visit
+    assert website.to_visit == OrderedDict((key, None) for key in to_visit)
 
 
 @pytest.mark.parametrize('links, to_visit', [
     (
         {'/', '/new-url', 'http://different_hostname', 'https://hostname'},
-        {'http://hostname/', 'https://hostname/', 'http://hostname/new-url'}
+        ('http://hostname/', 'https://hostname/', 'http://hostname/new-url')
     ),
 ])
 def test_scrape_url(monkeypatch, page_content, links, to_visit):
@@ -105,16 +108,16 @@ def test_scrape_url(monkeypatch, page_content, links, to_visit):
     monkeypatch.setattr('website.requests.get', lambda x: mock_response)
     website = Website('http://hostname/url')
     # Simulate visiting the page.
-    url = website.to_visit.pop()
+    url, _ = website.to_visit.popitem()
     website.scrape_url(url)
-    assert website.to_visit == to_visit
+    assert website.to_visit == OrderedDict((key, None) for key in to_visit)
     assert website.pages[url].links == links
 
 
 @pytest.mark.parametrize('links, to_visit', [
     (
         {'/', '/new-url', 'http://different_hostname', 'https://hostname'},
-        {'http://hostname/', 'https://hostname/', 'http://hostname/new-url'}
+        ('http://hostname/', 'https://hostname/', 'http://hostname/new-url')
     ),
 ])
 def test_scrape(monkeypatch, page_content, links, to_visit):

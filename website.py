@@ -70,7 +70,7 @@ class Website:
         if response.status_code != requests.codes.ok:
             return
         # NOTE: html.parser engine is slower than lxml
-        bs = BeautifulSoup(response.text, 'html.parser')
+        bs = BeautifulSoup(response.text, 'lxml')
         parsed_url = urlparse(url)
         # Find links.
         self.find_links(page, bs, parsed_url)

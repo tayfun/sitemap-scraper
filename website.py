@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from urllib.parse import urlparse, urlunparse
 
 from bs4 import BeautifulSoup
@@ -16,12 +17,13 @@ class Website:
     def __init__(self, seed):
         # Dictionary mapping of URL strings to Page objects.
         self.pages = dict()
-        # Add seed URL to start scraping from. URLs in to_visit are always
-        # normalized. We use canonical form of the URL so we can identify same
+        # We use canonical form of the seed URL so we can identify same
         # pages. ex. example.com/ is equal to example.com or
         # example.com/?key1=value1&key2=value2 equal to
         # example.com/?key2=value2&key1=value1
-        self.to_visit = set([w3lib.url.canonicalize_url(seed)])
+        seed = w3lib.url.canonicalize_url(seed)
+        # We use ordered dict as a set. It is ordered so runs are consistent.
+        self.to_visit = OrderedDict(((seed, None),))
         parse_seed = urlparse(seed)
         self.hostname = parse_seed.hostname
 
@@ -59,7 +61,7 @@ class Website:
             # Only follow this link if it hasn't been visited before and
             # it has the same hostname.
             if link not in self.pages and self.hostname == link_hostname:
-                self.to_visit.add(link)
+                self.to_visit[link] = None
 
     def scrape_url(self, url):
         """Scrapes a single URL."""
@@ -91,7 +93,7 @@ class Website:
         """
         count = 0
         while self.to_visit:
-            url = self.to_visit.pop()
+            url, _ = self.to_visit.popitem()
             self.scrape_url(url)
             count += 1
             if count > 20:

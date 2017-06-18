@@ -11,4 +11,9 @@ This project scrapes a given domain and creates an internal site map of the page
 
 # Usage
 
-    python site.py --seed http://blog.tayfunsen.com/ print-sitemap
+    python website.py --seed http://blog.tayfunsen.com/ print-sitemap
+
+# Run tests
+
+    pip install -r requirements_test.txt
+    py.test tests.py

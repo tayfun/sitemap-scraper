@@ -14,6 +14,7 @@ blocking is avoided with concurrency.
     pyenv install 3.6.1
     pyenv shell 3.6.1
     mkvirtualenv sitemap-scraper && mkdir sitemap-scraper && cd sitemap-scraper
+    git clone git@github.com:tayfun/sitemap-scraper.git
     pip install -r requirements.txt
 
 # Usage

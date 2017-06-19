@@ -108,6 +108,7 @@ class Website:
         print("Scraping {}".format(url))
         page = Page(url)
         self.pages[url] = page
+        self.to_visit.pop(url)
         # TODO: Better to use same session for all requests as it has
         # connection pooling and other improvements.
         async with aiohttp.ClientSession() as session:
@@ -144,7 +145,6 @@ class Website:
                 self.async_scrape_url(url) for url, _ in
                 self.to_visit.items()
             ]
-            self.to_visit.clear()
             futures = asyncio.gather(*coros)
             loop.run_until_complete(futures)
             if count > self.max_crawl:

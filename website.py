@@ -15,6 +15,8 @@ class Website:
 
     # (tag, link_attribute) tuples for retrieving assets.
     asset_tags = (('link', 'href'), ('script', 'src'), ('img', 'src'))
+    # Max number of pages to crawl
+    max_crawl = 20
 
     def __init__(self, seed):
         # Dictionary mapping of URL strings to Page objects.
@@ -98,7 +100,7 @@ class Website:
             url, _ = self.to_visit.popitem()
             self.scrape_url(url)
             count += 1
-            if count > 20:
+            if count > self.max_crawl:
                 break
 
     async def async_scrape_url(self, url):
@@ -138,13 +140,14 @@ class Website:
             print('There are {} links to visit.'.format(
                 len(self.to_visit)))
             count += len(self.to_visit)
-            coros = (
+            coros = [
                 self.async_scrape_url(url) for url, _ in
                 self.to_visit.items()
-            )
+            ]
+            self.to_visit.clear()
             futures = asyncio.gather(*coros)
             loop.run_until_complete(futures)
-            if count > 20:
+            if count > self.max_crawl:
                 break
         loop.close()
 
